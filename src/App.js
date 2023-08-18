@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import './App.css';
 import { initializeApp } from 'firebase/app';
-import { getFirestore, getDoc, doc, setDoc, updateDoc } from 'firebase/firestore';
-import { Slider, Stack } from '@mui/material';
+import { getFirestore, getDoc, doc, updateDoc } from 'firebase/firestore';
+import { Slider } from '@mui/material';
 
 const firebaseConfig = {
   apiKey: "AIzaSyD_bUvgzrtGDKakaXi0AswV1v-o3T2lnHg",
@@ -24,19 +24,23 @@ const logoMap = {
 }
 
 const getRandomWindowPos = (min, max) => {
-  return Math.floor(Math.random() * ((max) - (min + 50)));
+  return Math.floor(Math.random() * ((max - 100) - (min) + min));
 }
 
 let difficulty = 50;
+if (localStorage.getItem('difficulty')) difficulty = localStorage.getItem('difficulty');
 
 const getTrafficCones = () => {
   const cones = [];
   const coneLocations = [];
-  for(var i = 0; i < (Math.ceil(Math.random() * (difficulty - 10) + (difficulty))); i++) {
-    const randomPos = {top: getRandomWindowPos(0, window.innerHeight), left: getRandomWindowPos(0, window.innerWidth)};
+  for(var i = 0; i < difficulty; i++) {
+    let randomPos = {top: getRandomWindowPos(0, window.innerHeight), left: getRandomWindowPos(0, window.innerWidth)};
+    if (randomPos.top < 100 && randomPos.left < 100) randomPos= {top: randomPos.top + 100, left: randomPos.left + 100};
+    if (randomPos.top > window.innerHeight - 100 && randomPos.left > window.innerWidth - 100) randomPos= {top: randomPos.top - 100, left: randomPos.left - 100};
     cones.push(<img src={require('./traffic.png')} alt="traffic cone" className='traffic' style={{top: randomPos.top, left: randomPos.left}} key={`${randomPos.top}${randomPos.left}`} />)
     coneLocations.push(randomPos);
   }
+
   return {cones: cones, coneLocations: coneLocations};
 }
 
@@ -51,8 +55,8 @@ const getScores = async () => {
 
 function App() {
   const [pos, setPos] = useState({ });
-  const [logo, setLogo] = useState('golinks');
-  const [hit, setHit] = useState(false);
+  const [logo, setLogo] = useState('');
+  // const [hit, setHit] = useState(false);
   const [gameStart, setGameStart] = useState(false);
   const [result, setResult] = useState('');
   const [scores, setScores] = useState();
@@ -75,6 +79,10 @@ function App() {
     updateScores();
   }, [scores]);
 
+  useEffect(() => {
+    if(localStorage.getItem('team')) setLogo(localStorage.getItem('team'));
+  }, []);
+
   const scoreGetter = async () => {
     const updatedScores = await getScores();
     return updatedScores;
@@ -88,10 +96,10 @@ function App() {
   const checkForCones = (e) => {
     const checkedCones = cones.coneLocations.map(cone => {
       const posDiff = {x: cone.left - e.clientX, y: cone.top - e.clientY};
-      if(posDiff.x > -60 && posDiff.x < -10 && posDiff.y > -80 && posDiff.y < 30) return cone;
+      if(posDiff.x > -50 && posDiff.x < -20 && posDiff.y > -90 && posDiff.y < 10) return cone;
     });
     if(checkedCones.find(check => check)) {
-      setHit(true);
+      // setHit(true);
       setResult('You hit a cone!  You lose 🚗🚧');
     };
   }
@@ -109,6 +117,7 @@ function App() {
   const changeLogo = (e) => {
     setLogo(e.target.value);
     trail = [];
+    localStorage.setItem('team', e.target.value);
   }
 
   const startGame = async () => {
@@ -127,9 +136,15 @@ function App() {
   }
   
   const restartGame = async () => {
-    setHit(false);
+    // setHit(false);
     setGameStart(false);
-    setLogo('golinks');
+    
+    const storedDifficulty = localStorage.getItem('difficulty', difficulty);
+    if(storedDifficulty) difficulty = storedDifficulty;
+
+    const storedTeam = localStorage.getItem('team', logo);
+    if(storedTeam) setLogo(storedTeam);
+
     setResult('');
     trail = [];
     cones = [];    
@@ -146,17 +161,18 @@ function App() {
 
   const handleChange = (e) => {
     difficulty = e.target.value;
+    localStorage.setItem('difficulty', difficulty);
   }
 
   const handleMouseOut = () => {
     if (!gameStart) return;
-    setResult('You left the game!  You lose 🚗🚧');
     setGameStart(false);
+    setResult('You left the game!  You lose 🚗🚧');
   }
   
   return (
     <div className='app-container' onMouseLeave={handleMouseOut}>
-      {!gameStart && <button style={{top: 25, left: 25}} onClick={startGame}>Start</button>}
+      {(!gameStart && !result) && <button style={{top: 25, left: 25}} onClick={startGame}>Start</button>}
       <div className="app" onMouseMove={moveTrail} onTouchStart={moveTrail}>
         {trail.map(img => img)}
           {!result && <>
@@ -165,9 +181,9 @@ function App() {
               <>
                 <p>Select Team:</p>
                 <select name='logo' id='logo' onChange={changeLogo}>
-                  <option value='golinks'>GoLinks</option>
-                  <option value='gosearch'>GoSearch</option>
-                  <option value='goprofiles'>GoProfiles</option>
+                  <option value='golinks' selected={logo === 'golinks' ? 'selected' : ''}>GoLinks</option>
+                  <option value='gosearch' selected={logo === 'gosearch' ? 'selected' : ''}>GoSearch</option>
+                  <option value='goprofiles'  selected={logo === 'goprofiles' ? 'selected' : ''}>GoProfiles</option>
                 </select>
               </>}
           </>}
@@ -175,15 +191,15 @@ function App() {
             <p className='slider-header'>Select Difficulty:</p>
             <Slider
               size="small"
-              defaultValue={50}
+              defaultValue={difficulty}
               aria-label="Small"
               valueLabelDisplay="auto"
               onChange={handleChange}
               className='slider'
               step={10} 
               marks 
-              min={10} 
-              max={100}
+              min={50} 
+              max={150}
               sx={{
                 width:'16.5em'
               }}
