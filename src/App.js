@@ -24,7 +24,7 @@ const logoMap = {
 }
 
 const getRandomWindowPos = (min, max) => {
-  return Math.floor(Math.random() * ((max - 50) - (min + 50)));
+  return Math.floor(Math.random() * ((max) - (min + 50)));
 }
 
 let difficulty = 50;
@@ -147,22 +147,31 @@ function App() {
   const handleChange = (e) => {
     difficulty = e.target.value;
   }
+
+  const handleMouseOut = () => {
+    if (!gameStart) return;
+    setResult('You left the game!  You lose 🚗🚧');
+    setGameStart(false);
+  }
   
   return (
-    <div className='app-container'>
-      {!result && <button style={{top: 25, left: 25}} onClick={startGame}>Start</button>}
+    <div className='app-container' onMouseLeave={handleMouseOut}>
+      {!gameStart && <button style={{top: 25, left: 25}} onClick={startGame}>Start</button>}
       <div className="app" onMouseMove={moveTrail} onTouchStart={moveTrail}>
         {trail.map(img => img)}
           {!result && <>
             {gameStart && cones.cones}
-            <p>Select Team:</p>
-            <select name='logo' id='logo' onChange={changeLogo}>
-              <option value='golinks'>GoLinks</option>
-              <option value='gosearch'>GoSearch</option>
-              <option value='goprofiles'>GoProfiles</option>
-            </select>
+            {!gameStart &&
+              <>
+                <p>Select Team:</p>
+                <select name='logo' id='logo' onChange={changeLogo}>
+                  <option value='golinks'>GoLinks</option>
+                  <option value='gosearch'>GoSearch</option>
+                  <option value='goprofiles'>GoProfiles</option>
+                </select>
+              </>}
           </>}
-          <div className='slider-container'>
+          {!gameStart && !result && <div className='slider-container'>
             <p className='slider-header'>Select Difficulty:</p>
             <Slider
               size="small"
@@ -179,7 +188,7 @@ function App() {
                 width:'16.5em'
               }}
             />
-          </div>
+          </div>}
           {result && <div className='result-container'>
             <p className='result'>{result}</p>
             <ul>
