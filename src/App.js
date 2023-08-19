@@ -56,7 +56,7 @@ const getScores = async () => {
 function App() {
   const [pos, setPos] = useState({ });
   const [logo, setLogo] = useState('');
-  // const [hit, setHit] = useState(false);
+  const [hit, setHit] = useState(false);
   const [gameStart, setGameStart] = useState(false);
   const [result, setResult] = useState('');
   const [scores, setScores] = useState();
@@ -80,7 +80,17 @@ function App() {
   }, [scores]);
 
   useEffect(() => {
-    if(localStorage.getItem('team')) setLogo(localStorage.getItem('team'));
+    if(localStorage.getItem('team')) {
+      setLogo(localStorage.getItem('team'))
+    } else {
+      localStorage.setItem('team', 'golinks');
+    }
+
+    if(localStorage.getItem('difficulty')) {
+      difficulty = localStorage.getItem('difficulty');
+    } else {
+      localStorage.setItem('difficulty', 50);
+    }
   }, []);
 
   const scoreGetter = async () => {
@@ -99,7 +109,7 @@ function App() {
       if(posDiff.x > -50 && posDiff.x < -20 && posDiff.y > -90 && posDiff.y < 10) return cone;
     });
     if(checkedCones.find(check => check)) {
-      // setHit(true);
+      setHit(true);
       setResult('You hit a cone!  You lose 🚗🚧');
     };
   }
@@ -136,7 +146,7 @@ function App() {
   }
   
   const restartGame = async () => {
-    // setHit(false);
+    setHit(false);
     setGameStart(false);
     
     const storedDifficulty = localStorage.getItem('difficulty', difficulty);
