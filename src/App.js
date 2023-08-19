@@ -175,7 +175,7 @@ function App() {
   }
 
   const handleMouseOut = () => {
-    if (!gameStart) return;
+    if (!gameStart || hit) return;
     setGameStart(false);
     setResult('You left the game!  You lose 🚗🚧');
   }
