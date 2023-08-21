@@ -84,12 +84,14 @@ function App() {
       setLogo(localStorage.getItem('team'))
     } else {
       localStorage.setItem('team', 'golinks');
+      setLogo('golinks');
     }
 
     if(localStorage.getItem('difficulty')) {
       difficulty = localStorage.getItem('difficulty');
     } else {
-      localStorage.setItem('difficulty', 50);
+      localStorage.setItem('difficulty', 100);
+      difficulty = 100;
     }
   }, []);
 
